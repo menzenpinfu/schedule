@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日程・順位表</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Zen+Kaku+Gothic+New:wght@400;700;900&display=swap');
+:root{
+  --bg:#09151f;
+  --bg2:#122030;
+  --gold:#e8a020;
+  --gold2:#f5c050;
+  --white:#eef2f7;
+  --gray:#6a8099;
+  --green:#22b555;
+  --red:#d93444;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--white);
+  font-family:'Zen Kaku Gothic New',sans-serif;
+  min-height:100vh;
+  padding:20px 16px 60px;
+  background-image:
+    radial-gradient(ellipse at 15% 20%,rgba(232,160,32,0.07) 0%,transparent 50%),
+    radial-gradient(ellipse at 85% 80%,rgba(34,181,85,0.04) 0%,transparent 50%);
+}
+.header{text-align:center;margin-bottom:24px;animation:fadeUp 0.6s ease both;}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:6px;color:var(--gold);opacity:0.7;margin-bottom:6px;}
+.title{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,10vw,60px);line-height:1;background:linear-gradient(135deg,var(--gold2),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+
+/* タブ */
+.tabs{display:flex;gap:8px;margin-bottom:20px;}
+.tab{flex:1;padding:10px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:var(--gray);transition:all 0.2s;text-align:center;}
+.tab.active{background:rgba(232,160,32,0.15);border-color:rgba(232,160,32,0.5);color:var(--gold2);}
+
+/* PDF表示 */
+#schedule-tab{display:block;}
+#standings-tab{display:none;}
+#results-tab{display:none;}
+#input-tab{display:none;}
+
+.pdf-wrap{width:100%;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.06);}
+.pdf-wrap iframe{width:100%;height:75vh;border:none;display:block;}
+.pdf-link{text-align:center;margin-top:12px;}
+.pdf-link a{color:var(--gold2);font-size:13px;font-weight:700;text-decoration:none;}
+
+/* 順位表 */
+.standings-title{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;color:var(--gold);margin-bottom:12px;opacity:0.8;}
+.standing-card{background:var(--bg2);border-radius:14px;padding:14px 16px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:14px;animation:fadeUp 0.4s ease both;}
+.standing-card.rank1{border-color:rgba(232,160,32,0.4);background:rgba(232,160,32,0.06);}
+.rank-num{font-family:'Bebas Neue',sans-serif;font-size:36px;line-height:1;width:32px;text-align:center;color:var(--gray);}
+.rank1 .rank-num{color:var(--gold);}
+.team-info{flex:1;}
+.team-name{font-size:16px;font-weight:900;}
+.team-record{font-size:12px;color:var(--gray);margin-top:2px;}
+.team-stats{text-align:right;}
+.win-rate{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--white);}
+.rank1 .win-rate{color:var(--gold2);}
+.win-rate-label{font-size:10px;color:var(--gray);}
+.gb{font-size:11px;color:var(--gray);margin-top:2px;}
+
+/* 試合結果 */
+.results-list{display:flex;flex-direction:column;gap:8px;}
+.result-card{background:var(--bg2);border-radius:12px;padding:12px 14px;border:1px solid rgba(255,255,255,0.06);animation:fadeUp 0.3s ease both;}
+.result-date{font-size:11px;color:var(--gray);margin-bottom:8px;}
+.result-teams{display:flex;align-items:center;gap:8px;}
+.result-team{flex:1;font-size:14px;font-weight:700;}
+.result-team.winner{color:var(--gold2);}
+.result-team.right{text-align:right;}
+.result-score{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--white);text-align:center;min-width:60px;}
+.result-delete{font-size:11px;color:rgba(217,52,68,0.5);cursor:pointer;text-align:right;margin-top:6px;}
+.result-delete:hover{color:var(--red);}
+
+/* 入力フォーム */
+.form-card{background:var(--bg2);border-radius:16px;padding:20px;border:1px solid rgba(255,255,255,0.06);}
+.form-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--gold);margin-bottom:16px;}
+.form-row{margin-bottom:14px;}
+label{font-size:12px;font-weight:700;color:var(--gray);display:block;margin-bottom:6px;letter-spacing:0.5px;}
+select,input[type=date],input[type=number]{
+  width:100%;padding:11px 14px;
+  background:rgba(255,255,255,0.05);
+  border:1.5px solid rgba(255,255,255,0.1);
+  border-radius:10px;color:var(--white);
+  font-family:'Zen Kaku Gothic New',sans-serif;
+  font-size:14px;font-weight:700;
+  -webkit-appearance:none;
+}
+select:focus,input:focus{outline:none;border-color:rgba(232,160,32,0.5);}
+option{background:var(--bg2);color:var(--white);}
+.score-row{display:flex;align-items:center;gap:10px;}
+.score-row select{flex:1;}
+.score-row input{flex:1;}
+.score-sep{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--gray);flex-shrink:0;}
+.submit-btn{
+  width:100%;padding:14px;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:var(--bg);border:none;border-radius:11px;
+  font-family:'Zen Kaku Gothic New',sans-serif;
+  font-size:15px;font-weight:900;cursor:pointer;
+  margin-top:6px;transition:transform 0.15s;
+  box-shadow:0 4px 16px rgba(232,160,32,0.3);
+}
+.submit-btn:hover{transform:translateY(-1px);}
+.submit-btn:disabled{background:#555;cursor:not-allowed;box-shadow:none;}
+.msg{margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px;display:none;}
+.msg.success{background:rgba(34,181,85,0.12);border:1px solid rgba(34,181,85,0.3);color:var(--green);display:block;}
+.msg.error{background:rgba(217,52,68,0.12);border:1px solid rgba(217,52,68,0.3);color:var(--red);display:block;}
+
+.loading{text-align:center;padding:40px 20px;color:var(--gray);}
+.loading-ring{width:36px;height:36px;border:3px solid rgba(232,160,32,0.2);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px;}
+.empty{text-align:center;padding:40px 20px;color:var(--gray);font-size:13px;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">BSTONES SOFTBALL 2026</div>
+  <div class="title">SCHEDULE</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('schedule')">📅 日程</div>
+  <div class="tab" onclick="switchTab('standings')">🏆 順位表</div>
+  <div class="tab" onclick="switchTab('results')">⚾ 試合結果</div>
+  <div class="tab" onclick="switchTab('input')">✏️ 入力</div>
+</div>
+
+<!-- 日程タブ -->
+<div id="schedule-tab">
+  <div class="pdf-wrap">
+    <iframe src="https://menzenpinfu.github.io/schedule/index.pdf"></iframe>
+  </div>
+  <div class="pdf-link">
+    <a href="https://menzenpinfu.github.io/schedule/index.pdf" target="_blank">PDFを別タブで開く →</a>
+  </div>
+</div>
+
+<!-- 順位表タブ -->
+<div id="standings-tab">
+  <div class="loading"><div class="loading-ring"></div>読み込み中...</div>
+</div>
+
+<!-- 試合結果タブ -->
+<div id="results-tab"></div>
+
+<!-- 入力タブ -->
+<div id="input-tab"></div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzDcpuXxhq7VAROtJR_ZaFpSZ840PnYJaOkIwp6zLTskkubmbT2ivx0RulxS3xelpo__Q/exec';
+const TEAMS = ['Bstones', 'Phoenix', 'Dirties'];
+let games = [];
+let loaded = false;
+
+async function loadGames() {
+  try {
+    const res = await fetch(GAS_URL + '?type=league_get');
+    games = await res.json();
+    loaded = true;
+    renderStandings();
+    renderResults();
+  } catch(e) {
+    document.getElementById('standings-tab').innerHTML = '<div class="empty">⚠️ データの読み込みに失敗しました</div>';
+  }
+}
+
+function switchTab(tab) {
+  ['schedule','standings','results','input'].forEach(t => {
+    document.getElementById(t + '-tab').style.display = t === tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', ['schedule','standings','results','input'][i] === tab);
+  });
+  if (tab === 'input') renderInput();
+}
+
+function calcStandings() {
+  const stats = {};
+  TEAMS.forEach(t => stats[t] = {w:0,l:0,d:0,rs:0,ra:0});
+  games.forEach(g => {
+    const a = g.teamA, b = g.teamB, sa = parseInt(g.scoreA), sb = parseInt(g.scoreB);
+    stats[a].rs += sa; stats[a].ra += sb;
+    stats[b].rs += sb; stats[b].ra += sa;
+    if (sa > sb) { stats[a].w++; stats[b].l++; }
+    else if (sb > sa) { stats[b].w++; stats[a].l++; }
+    else { stats[a].d++; stats[b].d++; }
+  });
+  return TEAMS.map(t => {
+    const s = stats[t];
+    const rate = (s.w + s.l) > 0 ? s.w / (s.w + s.l) : null;
+    return { name: t, ...s, games: s.w+s.l+s.d, rate };
+  }).sort((a, b) => {
+    if (a.rate === null && b.rate === null) return 0;
+    if (a.rate === null) return 1;
+    if (b.rate === null) return -1;
+    return b.rate - a.rate;
+  });
+}
+
+function fmtRate(r) {
+  if (r === null || isNaN(r)) return '---';
+  if (r === 1) return '1.000';
+  return r.toFixed(3).replace(/^0\./, '.');
+}
+
+function renderStandings() {
+  const s = calcStandings();
+  const leader = s[0].rate;
+  document.getElementById('standings-tab').innerHTML = `
+    <div style="margin-bottom:24px;">
+      <div class="standings-title">順位表</div>
+      ${s.map((t, i) => {
+        const gb = i === 0 || leader === null || t.rate === null ? '-' :
+          (((leader - t.rate) * (t.games - t.d))).toFixed(1);
+        return `
+        <div class="standing-card ${i===0?'rank1':''}">
+          <div class="rank-num">${i+1}</div>
+          <div class="team-info">
+            <div class="team-name">${t.name}</div>
+            <div class="team-record">${t.w}勝 ${t.l}敗 ${t.d}分　${t.games}試合</div>
+          </div>
+          <div class="team-stats">
+            <div class="win-rate">${fmtRate(t.rate)}</div>
+            <div class="win-rate-label">勝率</div>
+            ${i > 0 ? `<div class="gb">GB ${gb}</div>` : ''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="standings-title">得失点</div>
+    <div style="background:var(--bg2);border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,0.06);">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr style="border-bottom:1px solid rgba(232,160,32,0.2);">
+          <th style="padding:10px 12px;font-size:11px;color:var(--gold);text-align:left;">チーム</th>
+          <th style="padding:10px 12px;font-size:11px;color:var(--gold);text-align:center;">得点</th>
+          <th style="padding:10px 12px;font-size:11px;color:var(--gold);text-align:center;">失点</th>
+          <th style="padding:10px 12px;font-size:11px;color:var(--gold);text-align:center;">差</th>
+        </tr></thead>
+        <tbody>
+          ${s.map(t => `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td style="padding:10px 12px;font-size:13px;font-weight:700;">${t.name}</td>
+            <td style="padding:10px 12px;font-size:13px;text-align:center;">${t.rs}</td>
+            <td style="padding:10px 12px;font-size:13px;text-align:center;">${t.ra}</td>
+            <td style="padding:10px 12px;font-size:13px;text-align:center;color:${t.rs-t.ra>=0?'var(--green)':'var(--red)'};">${t.rs-t.ra>=0?'+':''}${t.rs-t.ra}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function renderResults() {
+  const el = document.getElementById('results-tab');
+  if (games.length === 0) {
+    el.innerHTML = '<div class="empty">⚾ まだ試合結果がありません</div>';
+    return;
+  }
+  const sorted = [...games].sort((a,b) => b.date.localeCompare(a.date));
+  el.innerHTML = `<div class="results-list">${sorted.map((g, i) => {
+    const aWin = parseInt(g.scoreA) > parseInt(g.scoreB);
+    const bWin = parseInt(g.scoreB) > parseInt(g.scoreA);
+    return `
+    <div class="result-card">
+      <div class="result-date">📅 ${g.date.replace(/-/g,'/')}</div>
+      <div class="result-teams">
+        <div class="result-team ${aWin?'winner':''}">${g.teamA}</div>
+        <div class="result-score">${g.scoreA} - ${g.scoreB}</div>
+        <div class="result-team right ${bWin?'winner':''}">${g.teamB}</div>
+      </div>
+      <div class="result-delete" onclick="deleteGame(${i},'${g.date}','${g.teamA}','${g.scoreA}','${g.scoreB}','${g.teamB}')">🗑 削除</div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function renderInput() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('input-tab').innerHTML = `
+    <div class="form-card">
+      <div class="form-title">試合結果を入力</div>
+      <div class="form-row">
+        <label>試合日</label>
+        <input type="date" id="gameDate" value="${today}">
+      </div>
+      <div class="form-row">
+        <label>チームA　得点　-　得点　チームB</label>
+        <div class="score-row">
+          <select id="teamA">${TEAMS.map(t=>`<option value="${t}">${t}</option>`).join('')}</select>
+          <input type="number" id="scoreA" min="0" value="0" style="text-align:center;">
+          <div class="score-sep">-</div>
+          <input type="number" id="scoreB" min="0" value="0" style="text-align:center;">
+          <select id="teamB">${TEAMS.map((t,i)=>`<option value="${t}" ${i===1?'selected':''}>${t}</option>`).join('')}</select>
+        </div>
+      </div>
+      <button class="submit-btn" id="submitBtn" onclick="submitGame()">登録する</button>
+      <div class="msg" id="msg"></div>
+    </div>`;
+}
+
+async function submitGame() {
+  const date = document.getElementById('gameDate').value;
+  const teamA = document.getElementById('teamA').value;
+  const teamB = document.getElementById('teamB').value;
+  const scoreA = parseInt(document.getElementById('scoreA').value);
+  const scoreB = parseInt(document.getElementById('scoreB').value);
+  const btn = document.getElementById('submitBtn');
+
+  if (!date) { showMsg('試合日を入力してください', 'error'); return; }
+  if (teamA === teamB) { showMsg('同じチーム同士は登録できません', 'error'); return; }
+  if (isNaN(scoreA) || isNaN(scoreB)) { showMsg('得点を入力してください', 'error'); return; }
+
+  btn.disabled = true;
+  btn.textContent = '送信中...';
+
+  try {
+    await fetch(`${GAS_URL}?type=league_save&date=${date}&teamA=${encodeURIComponent(teamA)}&scoreA=${scoreA}&scoreB=${scoreB}&teamB=${encodeURIComponent(teamB)}`);
+    games.push({ date, teamA, scoreA, scoreB, teamB });
+    showMsg('✅ 登録しました！', 'success');
+    setTimeout(() => switchTab('standings'), 1000);
+  } catch(e) {
+    showMsg('❌ 送信に失敗しました。もう一度試してください。', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '登録する';
+  }
+}
+
+async function deleteGame(idx, date, teamA, scoreA, scoreB, teamB) {
+  if (!confirm('この試合結果を削除しますか？')) return;
+  try {
+    await fetch(`${GAS_URL}?type=league_delete&date=${date}&teamA=${encodeURIComponent(teamA)}&scoreA=${scoreA}&scoreB=${scoreB}&teamB=${encodeURIComponent(teamB)}`);
+    games.splice(idx, 1);
+    renderResults();
+    renderStandings();
+  } catch(e) {
+    alert('削除に失敗しました');
+  }
+}
+
+function showMsg(text, type) {
+  const msg = document.getElementById('msg');
+  if (!msg) return;
+  msg.textContent = text;
+  msg.className = 'msg ' + type;
+}
+
+loadGames();
+</script>
+</body>
+</html>
